@@ -74,6 +74,11 @@ AM335xADC::AM335xADC(CHN channel, unsigned int samples) {
     for (int i = 0; i < nChannels; ++i) {
         values[i].resize(samples);
     }
+
+    for (int i = 0; i < 8; ++i) {
+        calibration[i][0] = 0;
+        calibration[i][4095] = 1.8;
+    }
 }
 
 AM335xADC::~AM335xADC() {
@@ -117,12 +122,12 @@ double AM335xADC::getAverage(unsigned int channel) {
         throw runtime_error("The requested channel has not been enabled.");
     }
 
-    unsigned long long sum = 0;
+    double sum = 0;
     for (int i = 0; i < samples; ++i) {
-        sum += values[index[channel]][i];
+        sum += convertADCValue(channel, values[index[channel]][i]);
     }
 
-    return sum / (double)samples;
+    return sum / samples;
 }
 
 double AM335xADC::getStandardError(unsigned int channel) {
@@ -136,9 +141,34 @@ double AM335xADC::getStandardError(unsigned int channel) {
 
     double sum = 0;
     double average = getAverage(channel);
+    double diff;
     for (int i = 0; i < samples; ++i) {
-        sum += pow(values[index[channel]][i]-average, 2);
+        diff = convertADCValue(channel, values[index[channel]][i])-average;
+        sum += diff*diff;
     }
 
     return sqrt(sum / (samples-1) / samples);
+}
+
+void AM335xADC::addCalibPoint(int channel, double voltage, double adcValue) {
+    if (channel < 0 || channel > 7) {
+        throw std::invalid_argument("Invalid channel number.");
+    }
+
+    calibration[channel][adcValue] = voltage;
+}
+
+double AM335xADC::convertADCValue(int channel, double adcValue) {
+    double x, y;
+    std::map<double, double>::iterator i = calibration[channel].begin();
+
+    while (i->first < adcValue) {
+        ++i;
+    }
+
+    x = i->first;
+    y = i->second;
+    --i;
+
+    return i->second + (y - i->second)/(x - i->first) * (adcValue - i->first);
 }

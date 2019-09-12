@@ -20,7 +20,8 @@ public:
     static const CHN CHN7 = 128;
 
     /**
-     * Costruttore.
+     * Costruttore. La curva di calibrazione predefinita per tutti i canali è 
+     * la retta per (ADC = 0, V = 0) e (ADC = 4095, V = 1.8).
      * @param channels Maschera di bit che individua i canali da campionare. Si 
      *                 può costruire a partire dai membri statici CHN0, CHN1, 
      *                 CHN2... combinabili attraverso bitwise xor.
@@ -54,11 +55,32 @@ public:
      * indicato.
      * @param channel Canale di cui restituire l'errore standard sulla tensione 
      *                media.
-     * @return Errore standard sulla tensione media del canale indicato.
+     * @return L'errore standard sulla tensione media del canale indicato.
      */
     double getStandardError(unsigned int channel);
 
+    /**
+     * Carica il punto indicato alla curva di calibrazione per il canale 
+     * selezionato. Un punto precedentemente inserito che abbia un valore 
+     * dell'ADC pari a quello fornito a questo metodo viene eliminato.
+     * @param channel Canale la cui curva di calibrazione viene modificata.
+     * @param voltage Tensione in volt in ingresso al canale selezionato.
+     * @param adcValue Valore campionato dall'ADC.
+     */
+    void addCalibPoint(int channel, double voltage, double adcValue);
+
+    /**
+     * Restituisce la tensione associata al valore dell'ADC fornito attraverso 
+     * la curva di calibrazione per il canale indicato.
+     * @param channel Canale dell'ADC della misura.
+     * @param adcValue Valore dell'ADC da convertire.
+     * @return Il valore in tensione convertito.
+     */
+    double convertADCValue(int channel, double adcValue);
+
 private:
+    map<double, double> calibration[8];
+
     unsigned int samples;
 
     int fd;
