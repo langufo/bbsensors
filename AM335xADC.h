@@ -9,25 +9,24 @@ using std::vector;
 
 class AM335xADC {
 public:
-    typedef unsigned char CHN;
-    static const CHN CHN0 = 1;
-    static const CHN CHN1 = 2;
-    static const CHN CHN2 = 4;
-    static const CHN CHN3 = 8;
-    static const CHN CHN4 = 16;
-    static const CHN CHN5 = 32;
-    static const CHN CHN6 = 64;
-    static const CHN CHN7 = 128;
+    static const unsigned char CHN0 = 1;
+    static const unsigned char CHN1 = 2;
+    static const unsigned char CHN2 = 4;
+    static const unsigned char CHN3 = 8;
+    static const unsigned char CHN4 = 16;
+    static const unsigned char CHN5 = 32;
+    static const unsigned char CHN6 = 64;
+    static const unsigned char CHN7 = 128;
 
     /**
      * Costruttore. La curva di calibrazione predefinita per tutti i canali è 
      * la retta per (ADC = 0, V = 0) e (ADC = 4095, V = 1.8).
      * @param channels Maschera di bit che individua i canali da campionare. Si 
      *                 può costruire a partire dai membri statici CHN0, CHN1, 
-     *                 CHN2... combinabili attraverso bitwise xor.
+     *                 CHN2... combinabili attraverso bitwise or.
      * @param samples Numero di campionamenti da effettuare alla volta.
      */
-    AM335xADC(CHN channels, unsigned int samples);
+    AM335xADC(unsigned char channels, int samples);
     ~AM335xADC();
 
     /**
@@ -41,14 +40,14 @@ public:
      * @param channel Canale di cui restituire i valori campionati.
      * @return Un vector contenente i valori campionati.
      */
-    const std::vector<unsigned int>& getADCValues(unsigned int channel);
+    const vector<unsigned int>& getADCValues(int channel);
 
     /**
      * Restituisce la tensione media per il canale indicato.
      * @param channel Canale di cui restituire la tensione media.
      * @return La tensione media per il canale indicato.
      */
-    double getAverage(unsigned int channel);
+    double getAverage(int channel);
 
     /**
      * Restituisce l'errore standard della tensione media per il canale 
@@ -57,7 +56,7 @@ public:
      *                media.
      * @return L'errore standard sulla tensione media del canale indicato.
      */
-    double getStandardError(unsigned int channel);
+    double getStandardError(int channel);
 
     /**
      * Carica il punto indicato alla curva di calibrazione per il canale 
@@ -81,15 +80,16 @@ public:
 private:
     map<double, double> calibration[8];
 
-    unsigned int samples;
+    int samples;
 
     int fd;
 
-    unsigned int nChannels;
-    unsigned char* data;
+    unsigned char* buffer;
+    unsigned int bufferSize;
 
-    map<unsigned int, unsigned int> index;
-    vector<vector<unsigned int>> values;
+    map<int, vector<unsigned int>> values;
+    map<int, double> averages;
+    map<int, double> standardErrors;
 };
 
 #endif
