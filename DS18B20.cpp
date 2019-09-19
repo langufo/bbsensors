@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <time.h>
 
 #include "DS18B20.h"
@@ -24,14 +25,15 @@ void DS18B20::convertT(Maxim1WireBus& bus) {
 }
 
 double DS18B20::getMeasuredTemp() {
-    unsigned int temperature;
+    uint16_t temperature = 0;
+
     bus.reset();
     bus.write(0x55, 8);  // MATCH ROM command
     bus.write(deviceID, 64);
     bus.write(0xBE, 8);  // READ SCRATCHPAD command
-    temperature = 0;
     for (int i = 0; i < 16; ++i) {
         temperature += bus.read() << i;
     }
-    return temperature / 16.;
+
+    return (int16_t)temperature / 16.;
 }
